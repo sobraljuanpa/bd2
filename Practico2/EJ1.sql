@@ -68,16 +68,13 @@ CREATE OR REPLACE TRIGGER VALIDAR_REQS_POSTULACION BEFORE INSERT OR UPDATE ON PO
 FOR EACH ROW
 DECLARE REQS_NO_CUMPLIDOS NUMERIC;
 BEGIN
-    SELECT COUNT(*) INTO REQS_NO_CUMPLIDOS FROM POST_CUMPLE_REQ WHERE
-        ci = :NEW.ci AND nroReferencia = :NEW.nroReferencia AND cumple = 'N';
+    SELECT COUNT(*) INTO REQS_NO_CUMPLIDOS
+    FROM Post_Cumple_Req INNER JOIN RequisitoOferta 
+        ON RequisitoOferta.nroReferencia=post_cumple_req.nroreferencia AND
+        requisitooferta.nroRequisito=post_cumple_req.nrorequisito
+    WHERE cumple = 'N' AND ci = :NEW.CI;
     
     IF REQS_NO_CUMPLIDOS > 0 THEN
         RAISE_APPLICATION_ERROR(-20006, 'El interesado no cumple con los requisitos de la postulacion');
     END IF;
 END;
-
---- para preguntar ----
-
---manejo de listas, onda cargar una lista a una variable y recorrerla desp
---si se puede modificar un chequeo para que funcione de una forma con update y otra con insert o tengo que crear dos
---como resolver el 2.5
