@@ -60,6 +60,31 @@ un número de teléfono o una dirección de correo electrónico, pero no ambos. 
 foto y banner de perfil, que pueden ser archivos JPEG, PNG o GIF de máximo 10 MB. También se
 registra la fecha de creación de la cuenta
 
+``` SQL
+DROP TABLE Usuario;
+
+CREATE TABLE Usuario(
+    nombrePrivado   varchar(50)  not null primary key,
+    nombrePublico   varchar(50)  not null unique,
+    contraseña      varchar(50)  not null,
+    biografia       varchar(500) not null,
+    fechaNacimiento date         not null,
+    numTelefono     number(20),
+    email           varchar(50),
+    URIFoto         varchar(50),
+    URIBanner       varchar(50),
+    fechaCreacion   date         not null
+);
+
+-- Funcion para chequear tamaño de foto y banner
+-- Funcion para chequear extension de foto y banner
+-- Funcion para validar fecha de nacimiento
+-- Funcion para validar que unicamente uno de los metodos de recuperacion esta definido
+
+-- Unir estas funciones en un create or update trigger
+
+```
+
 A medida que se avanza en la generación de contenido y en el uso de la plataforma los usuarios van
 alcanzando “logros”. Algunos ejemplos de logros son: emitir 7 horas, emitir 8 días distintos, etc.
 Cuando se cumplen determinados logros el usuario sube de nivel. Se comienza por el nivel “Streamer”,
