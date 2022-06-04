@@ -1,0 +1,9 @@
+show dbs # muestra bases de datos
+use $nombreDB # crea BD con nombre nombreDB, no muestra como creada hasta no insertarle datos
+show collections # muestra colecciones dentro de la BD
+
+db.usuarios.insert({}) # crea coleccion con nombre usuario
+db.publicaciones.insert({}) # crea coleccion con nombre publicaciones
+db.mensajes.insert({}) # crea coleccion con nombre mensajes
+
+show collections # muestra colecciones creadas
