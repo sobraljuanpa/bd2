@@ -58,3 +58,149 @@ Sumar ocurrencias entre VISUALIZACIONES_VOD Y VISUALIZACIONES_STREAM
 LINKS UTILES
 https://www.mongodb.com/docs/manual/core/schema-validation/
 https://www.mongodb.com/docs/manual/reference/bson-types/
+
+
+Prueba de documento streams
+``` javascript
+    
+    use oblibd2;
+
+    let StreamsSchema = {
+        bsonType: "object",//Fin, Duracion no son un campos requerido dado que no necesariamente van a estar definido siempre (emisiones en curso).
+        required: ["Titulo", "NombreStreamer", "Inicio", "Espectadores", "Calidad", "Categoria"],
+        properties: {
+            Titulo: {
+                bsonType: "string",
+                description: "Titulo del stream"
+            },
+            NombreStreamer: {
+                bsonType: "string",
+                description: "Nombre publico del streamer"
+            },
+            Inicio: {
+                bsonType: "date",
+                description: "Fecha de inicio"
+            },
+            Espectadores: {
+                bsonType: "int",
+                minimum: 0,
+                description: "Cantidad maxima de espectadores"
+            },
+            Calidad: {
+                enum: ["UHD", "QHD", "1080p60", "720p60", "480p", "360p", "160p"],
+                description: "Calidad del stream"
+            },
+            Categoria: {
+                enum: ["Juegos", "IRL", "Musica", "Esports", "Creativos"],
+                description: "Categoria del stream"
+            }
+        }
+    };
+
+    db.createCollection("Emisiones", {
+        validator: {
+            $jsonSchema: StreamsSchema 
+        }
+    });
+
+    show dbs;
+    show collections; // se deberia ver como creada la bd y la coleccion dentro de la misma
+
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStream1", NombreStreamer: "juan", Inicio: new Date(), Espectadores: 0, Calidad: "UHD", Categoria: "Juegos" }
+    )
+
+    db.Emisiones.insertMany([
+        { Titulo: "PruebaStream2", NombreStreamer: "joaco", Inicio: new Date(), Espectadores: 1000, Calidad: "QHD", Categoria: "Juegos" },
+        { Titulo: "PruebaStream3", NombreStreamer: "pedro", Inicio: new Date(), Espectadores: 300000, Calidad: "1080p60", Categoria: "Creativos" },
+        { Titulo: "PruebaStream4", NombreStreamer: "agus", Inicio: new Date(), Espectadores: 1000, Calidad: "720p60", Categoria: "Esports" },
+        { Titulo: "PruebaStream5", NombreStreamer: "fede", Inicio: new Date(), Espectadores: 50000, Calidad: "480p", Categoria: "IRL" },
+        { Titulo: "PruebaStream6", NombreStreamer: "luis", Inicio: new Date(), Espectadores: 100000, Calidad: "360p", Categoria: "Musica" },
+    ])
+
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStream7", NombreStreamer: "ale", Inicio: new Date(), Espectadores: 20, Calidad: "160p", Categoria: "Juegos" }
+    )
+
+    // pruebo inserciones invalidas omitiendo datos clave
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStreamInvalido", Inicio: new Date(), Espectadores: 20, Calidad: "160p", Categoria: "Juegos" }
+    )// sin nombre => Document failed validation
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStreamInvalido", NombreStreamer: "ale", Espectadores: 20, Calidad: "160p", Categoria: "Juegos" }
+    )// sin fecha => Document failed validation
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStreamInvalido", NombreStreamer: "ale", Inicio: new Date(), Calidad: "160p", Categoria: "Juegos" }
+    )// sin espectadores => Document failed validation
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStreamInvalido", NombreStreamer: "ale", Inicio: new Date(), Espectadores: 20, Calidad: "1080p", Categoria: "Juegos" }
+    )// calidad no en el enum => Document failed validation
+    db.Emisiones.insertOne(
+        { Titulo: "PruebaStreamInvalido", NombreStreamer: "ale", Inicio: new Date(), Espectadores: 20, Calidad: "160p", Categoria: "Cocina" }
+    )// categoria no en el enum => Document failed validation
+
+
+```
+
+Investigar bien el tema refs, creo que esta bien asi pero habria que pegarle otra vichada seguro
+
+Prueba de documento StreamChat
+``` javascript
+    let StreamChatSchema = {
+        bsonType: "object",
+        required: ["StreamId", "Mensaje", "Username", "Hora"],
+        properties: {
+            StreamId: {
+                bsonType: "string",
+                description: "Id del stream al que corresponde el mensaje"
+            },
+            Mensaje: {
+                bsonType: "string",
+                description: "Contenido del mensaje"
+            },
+            Username: {
+                bsonType: "string",
+                description: "Nombre del usuario que envia el mensaje"
+            },
+            Hora: {
+                bsonType: "date",
+                description: "Fecha del mensaje"
+            }
+        }
+    };
+
+    db.createCollection("Chats", {
+        validator: {
+            $jsonSchema: StreamChatSchema 
+        }
+    });
+
+    show collections;
+
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Probando mensajeria", Username: "juanMalvado", Hora: new Date() }
+    )
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Probando mensajeria nuevamente", Username: "juanBueno", Hora: new Date() }
+    )
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Claramente mensajeria funciona", Username: "juanMalvado", Hora: new Date() }
+    )
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Buen stream rey", Username: "juanBueno", Hora: new Date() }
+    )
+
+    //pruebo inserciones invalidas omitiendo parametros clave
+    db.Chats.insertOne(
+        { Mensaje: "Probando mensajeria", Username: "juanMalvado", Hora: new Date() }
+    ) //prueba sin streamId => Document failed validation
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Username: "juanBueno", Hora: new Date() }
+    ) //prueba sin mensaje => Document failed validation
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Buen stream rey", Hora: new Date() }
+    ) //prueba sin username => Document failed validation
+    db.Chats.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Buen stream rey", Username: "juanBueno" }
+    ) //prueba sin hora => Document failed validation
+```
