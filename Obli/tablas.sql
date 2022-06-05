@@ -24,6 +24,16 @@ CREATE TABLE Usuario(
 -- Funcion para chequear tamaño de foto y banner
 -- Funcion para chequear extension de foto y banner
 -- Funcion para validar fecha de nacimiento (edad > 13)
+CREATE OR REPLACE TRIGGER VALIDAR_EDAD_MIN_USUARIO BEFORE INSERT OR UPDATE ON Usuario
+FOR EACH ROW
+DECLARE -- Ver si funciona sin esto
+BEGIN
+	-- se compara con la cantidad de meses (12x13=>156)
+	IF 156 > MONTHS_BETWEEN(CURRENT_DATE, NEW:fechaNacimiento)
+		RAISE_APPLICATION_ERROR(-20003, 'El usuario aun no tiene 13 años de edad');
+	END IF;
+END;
+
 -- Funcion para validar que unicamente uno de los metodos de recuperacion esta definido
 CREATE OR REPLACE TRIGGER VALIDAR_METODO_RECUPERACION_UNICO
 BEFORE INSERT OR UPDATE ON Usuario
