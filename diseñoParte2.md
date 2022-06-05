@@ -203,4 +203,137 @@ Prueba de documento StreamChat
     db.Chats.insertOne(
         { StreamId: "629bb18298dce60358a74ba8", Mensaje: "Buen stream rey", Username: "juanBueno" }
     ) //prueba sin hora => Document failed validation
+
+```
+
+Prueba de documento StreamChat
+``` javascript
+
+    let StreamViewSchema = {
+        bsonType: "object",
+        required: ["StreamId", "Pais", "Username"],
+        properties: {
+            StreamId: {
+                bsonType: "string",
+                description: "Id del stream al que corresponde el mensaje"
+            },
+            Pais: {
+                bsonType: "string",
+                description: "Pais del usuario"
+            },
+            Username: {
+                bsonType: "string",
+                description: "Nombre del usuario"
+            }
+        }
+    };
+
+    db.createCollection("Views", {
+        validator: {
+            $jsonSchema: StreamViewSchema 
+        }
+    });
+
+    show collections
+
+    db.Views.insertMany([
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "juanMalvado" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Brasil", Username: "juanBueno" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Argentina", Username: "luis" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "pedro" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "jose" }
+    ])
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Brasil", Username: "juanBueno" }
+    )
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Argentina", Username: "luis" }
+    )
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "pedro" }
+    )
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "jose" }
+    )
+
+```
+
+Prueba de documento StreamChat
+``` javascript
+
+    let StreamViewSchema = {
+        bsonType: "object",
+        required: ["StreamId", "Pais", "Username"],
+        properties: {
+            StreamId: {
+                bsonType: "string",
+                description: "Id del stream al que corresponde el mensaje"
+            },
+            Pais: {
+                bsonType: "string",
+                description: "Pais del usuario"
+            },
+            Username: {
+                bsonType: "string",
+                description: "Nombre del usuario"
+            }
+        }
+    };
+
+    db.createCollection("Views", {
+        validator: {
+            $jsonSchema: StreamViewSchema 
+        }
+    });
+
+    show collections
+
+    db.Views.insertMany([
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "juanMalvado" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Brasil", Username: "juanBueno" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Argentina", Username: "luis" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "pedro" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "jose" }
+    ])
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Brasil", Username: "juanBueno" }
+    )
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Argentina", Username: "luis" }
+    )
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "pedro" }
+    )
+    db.Views.insertOne(
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "jose" }
+    )
+
+```
+
+
+Requerimiento 4
+Proveer una consulta que dada una categoría determinada, retorne la lista de streamers que hayan emitido contenido de dicha categoría.
+Requerimiento 5
+Proveer una consulta que dado un contenido retorne la cantidad de visualizaciones por país.
+Sumar ocurrencias entre VISUALIZACIONES_VOD Y VISUALIZACIONES_STREAM
+
+https://www.mongodb.com/docs/manual/tutorial/project-fields-from-query-results/
+https://www.mongodb.com/docs/manual/aggregation/
+
+``` js
+
+    // Cambiar juegos por cualquier otra categoria
+    db.Emisiones.find( {Categoria: "Juegos"}, {  NombreStreamer: 1, _id: 0 } )
+
+    // Cambiar streamId por stream deseado
+    db.Views.aggregate([
+        {
+            $match: { StreamId: "629bb18298dce60358a74ba8" }
+        },
+
+        { 
+            $group:{ _id: "$Pais", count: { $count: { } } } 
+        }
+    ])
+
 ```
