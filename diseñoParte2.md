@@ -293,7 +293,13 @@ Prueba de documento StreamChat
         { StreamId: "629bb18298dce60358a74ba8", Pais: "Brasil", Username: "juanBueno" },
         { StreamId: "629bb18298dce60358a74ba8", Pais: "Argentina", Username: "luis" },
         { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "pedro" },
-        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "jose" }
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "jose" },
+        { StreamId: "629bb18298dce60358a74ba8", Pais: "Uruguay", Username: "firulais" },
+        { StreamId: "629bb60898dce60358a74bad", Pais: "Paraguay", Username: "laika" },
+        { StreamId: "629bb60898dce60358a74bad", Pais: "Paraguay", Username: "suarez" },
+        { StreamId: "629bb60898dce60358a74bad", Pais: "Bolivia", Username: "messi" },
+        { StreamId: "629bb60898dce60358a74bad", Pais: "Bolivia", Username: "ney" },
+        { StreamId: "629bb60898dce60358a74bad", Pais: "Bolivia", Username: "mbappe" }
     ])
     db.Views.insertOne(
         { StreamId: "629bb18298dce60358a74ba8", Pais: "Brasil", Username: "juanBueno" }
