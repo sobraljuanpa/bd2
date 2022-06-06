@@ -89,3 +89,41 @@ VALUES ('prueba2', 'El prueba 2', 'notapassword', 'nada muy interesante', '10-JA
 INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, NUMTELEFONO, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
 VALUES ('prueba3', 'El prueba 3', 'notapassword', 'nada muy interesante', '10-JAN-20', 1234, 'asd', 'asd', CURRENT_DATE, 0, 1);
 ```
+
+
+
+Clase cursores, requerimientos 1 y 3 al parecer https://vimeopro.com/universidadortfi/fi-3839-bases-de-datos-2-61531-n5a-id/video/703576796 a partir de 1:35
+
+1:41 primer cursor, usa funcion tambien.
+
+Funciones esta clase min 1:22 https://vimeopro.com/universidadortfi/fi-3839-bases-de-datos-2-61531-n5a-id/video/696393071
+
+Procedimientos https://vimeopro.com/universidadortfi/fi-3839-bases-de-datos-2-61531-n5a-id/video/693838569 min 12
+
+``` SQL
+
+CREATE OR REPLACE PROCEDURE CHECK_ONLY_ONE_METHOD (num IN NUMBER, mail IN VARCHAR)
+IS --es necesario el AS?
+    TEL_DEFINIDO  BOOLEAN;
+	MAIL_DEFINIDO BOOLEAN;
+BEGIN
+    IF num IS NULL THEN
+		TEL_DEFINIDO := FALSE;
+	ELSE
+		TEL_DEFINIDO := TRUE;
+	END IF;
+
+	IF mail IS NULL THEN
+		MAIL_DEFINIDO := FALSE;
+	ELSE
+		MAIL_DEFINIDO := TRUE;
+	END IF;
+
+	IF (MAIL_DEFINIDO AND TEL_DEFINIDO) OR (NOT (MAIL_DEFINIDO OR TEL_DEFINIDO)) THEN
+		RAISE_APPLICATION_ERROR(-20001, 'No pueden estar definidos ambos metodos de recuperacion, pero al menos uno es necesario.');
+	END IF;
+END;
+
+-- esto compila, probar hacer funciones para todo y simplemente llamarlas desde los trigger
+
+```
