@@ -60,6 +60,7 @@ https://www.mongodb.com/docs/manual/core/schema-validation/
 https://www.mongodb.com/docs/manual/reference/bson-types/
 
 
+Aca se diferencia entre stream y VOD segun si tiene fecha de finalizacion o no
 Prueba de documento streams
 ``` javascript
     
@@ -80,6 +81,10 @@ Prueba de documento streams
             Inicio: {
                 bsonType: "date",
                 description: "Fecha de inicio"
+            },
+            Finalizacion: {
+                bsonType: "date",
+                description: "Fecha de finalizacion del stream"
             },
             Espectadores: {
                 bsonType: "int",
