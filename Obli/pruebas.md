@@ -126,4 +126,109 @@ END;
 
 -- esto compila, probar hacer funciones para todo y simplemente llamarlas desde los trigger
 
+CREATE OR REPLACE PROCEDURE CHECK_AGE (fecha IN DATE) AS
+BEGIN
+	IF 156 > MONTHS_BETWEEN(CURRENT_DATE, fecha) THEN
+		RAISE_APPLICATION_ERROR(-20002, 'El usuario aun no tiene 13 años de edad');
+	END IF;
+END;
+
+CREATE OR REPLACE TRIGGER USER_CHECKS BEFORE INSERT OR UPDATE ON USUARIOS
+FOR EACH ROW
+BEGIN
+	CHECK_ONLY_ONE_METHOD(:NEW.numTelefono, :NEW.email);
+	CHECK_AGE(:new.fechaNacimiento);
+END;
+
+-- anda perfecto, nos vamos a apoyar en esto para la creacion del trigger para mediodepago, capaz lo ideal es crear el proc y esa tabla primero
+```
+
+MEDIO DE PAGO
+
+``` SQL
+-- esta tabla la creamos para no tener tablas separadas y dos fk en usuario, es 
+-- una manera de mantener la info centralizada mediante el uso del trigger
+CREATE TABLE MedioDePago(
+	id 		    varchar(20) NOT null primary key,
+	numero 		number(50),
+	correo 		varchar(50),
+	habilitado 	char(1) NOT null -- Y O N
+);
+
+CREATE OR REPLACE TRIGGER VALIDAR_METODO_PAGO_UNICO BEFORE INSERT OR UPDATE ON MedioDePago
+FOR EACH ROW
+BEGIN
+	CHECK_ONLY_ONE_METHOD(:NEW.numero, :NEW.correo);
+END;
+
+-- esto asi anda
+
+```
+
+Tema donaciones
+``` SQL
+
+CREATE TABLE Donaciones(
+	nombreDonador varChar(50) NOT null references Usuario,
+	nombreDonado varChar(50) NOT null references Usuario,
+	fechaDonacion date        NOT null,
+	monto	      number(20)  NOT null,
+	primary key(nombreDonador, nombreDonado, fechaDonacion)
+);
+
+-- Funcion para checkear que el monto sea positivo
+CREATE OR REPLACE PROCEDURE CHECK_POSITIVE_AMOUNT(monto IN NUMBER) AS
+BEGIN
+	IF 0 > monto THEN
+		RAISE_APPLICATION_ERROR(-20003, 'El monto de una donacion debe ser mayor a cero');
+	END IF;
+END;
+
+-- Funcion para checkear que el monto a transferir sea mayor al saldo del donador
+CREATE OR REPLACE PROCEDURE CHECK_AMOUNT_AVAILABLE(monto IN NUMBER, nombre IN VARCHAR)
+IS --es necesario el AS/IS claramente si?
+    CANTIDAD_DISPONIBLE NUMBER;
+BEGIN
+   	SELECT bits INTO CANTIDAD_DISPONIBLE FROM USUARIO WHERE nombre = nombrePrivado;
+
+	IF CANTIDAD_DISPONIBLE < monto THEN
+		RAISE_APPLICATION_ERROR(-20004, 'El monto de una donacion debe ser menor o igual al saldo de bits del donante');
+	END IF;
+END;
+
+-- Trigger que unifica
+
+CREATE OR REPLACE TRIGGER VALIDATE_DONATION BEFORE INSERT OR UPDATE ON DONACIONES
+FOR EACH ROW
+BEGIN
+	CHECK_POSITIVE_AMOUNT(:NEW.monto);
+	CHECK_AMOUNT_AVAILABLE(:NEW.monto, :NEW.nombreDonador);
+END;
+
+
+-- prueba datos validos
+INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, NUMTELEFONO, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
+VALUES ('prueba1', 'El prueba 1', 'notapassword', 'nada muy interesante', '10-JAN-00', 1234, 'asd', 'asd', CURRENT_DATE, 0, 1);
+
+-- prueba ambos datos recuperacion definidos
+INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, EMAIL, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
+VALUES ('prueba2', 'El prueba 2', 'notapassword', 'nada muy interesante', '10-JAN-00', 'pruebaTrigger', 'asd', 'asd', CURRENT_DATE, 0, 1);
+
+INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, EMAIL, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
+VALUES ('prueba3', 'El prueba 3', 'notapassword', 'nada muy interesante', '10-JAN-00', 'pruebaTrigger', 'asd', 'asd', CURRENT_DATE, 1000, 1);
+
+--DONACION VALIDA 
+INSERT INTO DONACIONES (NOMBREDONADOR, NOMBREDONADO, FECHADONACION, MONTO) 
+VALUES ('prueba3', 'prueba1', CURRENT_DATE, 100);
+
+--DONACION MONTO NEGATIVO
+INSERT INTO DONACIONES (NOMBREDONADOR, NOMBREDONADO, FECHADONACION, MONTO) 
+VALUES ('prueba2', 'prueba1', CURRENT_DATE, -100);
+
+--DONACION MONTO MAYOR AL DISPONIBLE
+INSERT INTO DONACIONES (NOMBREDONADOR, NOMBREDONADO, FECHADONACION, MONTO) 
+VALUES ('prueba2', 'prueba1', CURRENT_DATE, 100);
+
+
+
 ```
