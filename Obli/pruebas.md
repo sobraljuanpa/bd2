@@ -149,8 +149,8 @@ MEDIO DE PAGO
 -- esta tabla la creamos para no tener tablas separadas y dos fk en usuario, es 
 -- una manera de mantener la info centralizada mediante el uso del trigger
 CREATE TABLE MedioDePago(
-	id 		    varchar(20) NOT null primary key,
-	numero 		number(50),
+	id 		    NUMBER PRIMARY KEY GENERATED AS IDENTITY,
+	numero 		number(10),
 	correo 		varchar(50),
 	habilitado 	char(1) NOT null -- Y O N
 );
@@ -161,8 +161,15 @@ BEGIN
 	CHECK_ONLY_ONE_METHOD(:NEW.numero, :NEW.correo);
 END;
 
--- esto asi anda
+-- PARA LOS INSERT USAR SYS_GUID
 
+
+INSERT INTO MEDIODEPAGO (NUMERO, HABILITADO) VALUES (12345, 'Y');
+INSERT INTO MEDIODEPAGO (NUMERO, HABILITADO) VALUES (133345, 'Y');
+INSERT INTO MEDIODEPAGO (NUMERO, HABILITADO) VALUES (1235645, 'Y');
+INSERT INTO MEDIODEPAGO (NUMERO, HABILITADO) VALUES (123415, 'N');
+INSERT INTO MEDIODEPAGO (CORREO, HABILITADO) VALUES ('PRUEBA@MAIL.COM', 'Y');
+INSERT INTO MEDIODEPAGO (CORREO, HABILITADO) VALUES ('USUARIO@USUARIO.USUARIO', 'N');
 ```
 
 Tema donaciones
@@ -231,4 +238,83 @@ VALUES ('prueba2', 'prueba1', CURRENT_DATE, 100);
 
 
 
+```
+
+
+``` SQL
+
+CREATE TABLE Suscripcion(
+	nombreSuscriptor varchar(50) NOT null references usuario,
+	nombreSuscripto varchar(50) NOT null references usuario,
+	fechaSuscripcion date 	     NOT null,
+	fechaRenovacion  date 	     NOT null,
+	medioPago	 number NOT null references MedioDePago,
+	primary key(nombreSuscriptor, nombreSuscripto)
+);
+
+
+-- USUARIOS AUXILIARES CON NIVEL PARA PROBAR SUSCRIPCIONES
+INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, EMAIL, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
+VALUES ('prueba4', 'El prueba 4', 'notapassword', 'nada muy interesante', '10-JAN-00', 'pruebaTrigger', 'asd', 'asd', CURRENT_DATE, 10000, 2);
+
+INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, EMAIL, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
+VALUES ('prueba5', 'El prueba 5', 'notapassword', 'nada muy interesante', '10-JAN-00', 'pruebaTrigger', 'asd', 'asd', CURRENT_DATE, 10000, 3);
+
+-- Funcion validar suscripto nivel >= 2
+-- Chequear medio de pago esta habilidado
+-- Chequear fechaRenovacion > fechaSuscripcion
+
+CREATE OR REPLACE PROCEDURE CHECK_PAYMENTMETHOD_ENABLED(idMetodo IN NUMBER)
+IS
+    estaHabilitado CHARACTER;
+BEGIN
+   	SELECT HABILITADO INTO estaHabilitado FROM MEDIODEPAGO WHERE id = idMetodo;
+
+	IF estaHabilitado = 'N' THEN
+		RAISE_APPLICATION_ERROR(-20005, 'El metodo de pago seleccionado no esta habilitado');
+	END IF;
+END;
+
+CREATE OR REPLACE PROCEDURE CHECK_LEVEL(nombre IN VARCHAR)
+IS
+    NIVELAUX NUMBER;
+BEGIN
+   	SELECT NIVEL INTO NIVELAUX FROM USUARIO WHERE nombrePrivado = nombre;
+
+	IF NIVELAUX < 2 THEN
+		RAISE_APPLICATION_ERROR(-20006, 'No se puede suscribir a un usuario con nivel menor a 2');
+	END IF;
+END;
+
+CREATE OR REPLACE PROCEDURE CHECK_VALID_DATES(fechaSuscripcion IN DATE, fechaRenovacion IN DATE) IS
+BEGIN
+	IF fechaSuscripcion > fechaRenovacion THEN
+		RAISE_APPLICATION_ERROR(-20007, 'La fecha de renovacion no puede ser previa a la de suscripcion');
+	END IF;
+END;
+
+CREATE OR REPLACE TRIGGER VALIDAR_SUSCRIPCION BEFORE INSERT OR UPDATE ON SUSCRIPCION
+FOR EACH ROW
+BEGIN
+	CHECK_PAYMENTMETHOD_ENABLED(:NEW.medioPago);
+	CHECK_LEVEL(:NEW.nombreSuscripto);
+	CHECK_VALID_DATES(:NEW.fechaSuscripcion, :NEW.fechaRenovacion);
+END;
+
+INSERT INTO SUSCRIPCION (nombreSuscriptor, nombreSuscripto, fechaSuscripcion, fechaRenovacion, medioPago)
+VALUES ('prueba1', 'prueba4', CURRENT_DATE, '10-JAN-30', 5);
+INSERT INTO SUSCRIPCION (nombreSuscriptor, nombreSuscripto, fechaSuscripcion, fechaRenovacion, medioPago)
+VALUES ('prueba2', 'prueba5', CURRENT_DATE, '10-JAN-30', 2);
+INSERT INTO SUSCRIPCION (nombreSuscriptor, nombreSuscripto, fechaSuscripcion, fechaRenovacion, medioPago)
+VALUES ('prueba1', 'prueba5', CURRENT_DATE, '10-JAN-30', 3);
+
+-- pruebas valores invalidos
+INSERT INTO SUSCRIPCION (nombreSuscriptor, nombreSuscripto, fechaSuscripcion, fechaRenovacion, medioPago)
+VALUES ('prueba1', 'prueba5', '10-JAN-40', '10-JAN-30', 2);
+
+INSERT INTO SUSCRIPCION (nombreSuscriptor, nombreSuscripto, fechaSuscripcion, fechaRenovacion, medioPago)
+VALUES ('prueba3', 'prueba5', CURRENT_DATE, '10-JAN-30', 4);
+
+INSERT INTO SUSCRIPCION (nombreSuscriptor, nombreSuscripto, fechaSuscripcion, fechaRenovacion, medioPago)
+VALUES ('prueba5', 'prueba1', CURRENT_DATE, '10-JAN-30', 3);
 ```
