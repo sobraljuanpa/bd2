@@ -133,11 +133,11 @@ BEGIN
 	END IF;
 END;
 
-CREATE OR REPLACE TRIGGER USER_CHECKS BEFORE INSERT OR UPDATE ON USUARIOS
+CREATE OR REPLACE TRIGGER USER_CHECKS BEFORE INSERT OR UPDATE ON USUARIO
 FOR EACH ROW
 BEGIN
 	CHECK_ONLY_ONE_METHOD(:NEW.numTelefono, :NEW.email);
-	CHECK_AGE(:new.fechaNacimiento);
+	CHECK_AGE(:NEW.fechaNacimiento);
 END;
 
 -- anda perfecto, nos vamos a apoyar en esto para la creacion del trigger para mediodepago, capaz lo ideal es crear el proc y esa tabla primero
@@ -149,10 +149,11 @@ MEDIO DE PAGO
 -- esta tabla la creamos para no tener tablas separadas y dos fk en usuario, es 
 -- una manera de mantener la info centralizada mediante el uso del trigger
 CREATE TABLE MedioDePago(
-	id 		    NUMBER PRIMARY KEY GENERATED AS IDENTITY,
+	id 		    NUMBER GENERATED AS IDENTITY,
 	numero 		number(10),
 	correo 		varchar(50),
-	habilitado 	char(1) NOT null -- Y O N
+	habilitado 	char(1) NOT null, -- Y O N
+    PRIMARY KEY(id)
 );
 
 CREATE OR REPLACE TRIGGER VALIDAR_METODO_PAGO_UNICO BEFORE INSERT OR UPDATE ON MedioDePago
