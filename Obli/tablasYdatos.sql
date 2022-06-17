@@ -1,12 +1,15 @@
 DROP TABLE SUSCRIPCION;
 DROP TABLE MEDIODEPAGO;
 DROP TABLE DONACIONES;
+DROP TABLE COMPRAS;
 DROP TABLE LOGRO;
 DROP TABLE USUARIOLOGRO;
+DROP TABLE IMAGENES;
 DROP TABLE USUARIO;
 
 CREATE TABLE MedioDePago(
 	id 		    NUMBER GENERATED AS IDENTITY,
+	nombreUsuario varchar(50) not null references Usuario,
 	numero 		number(10),
 	correo 		varchar(50),
 	habilitado 	char(1) NOT null, -- Y O N
@@ -67,8 +70,7 @@ CREATE TABLE Usuario(
     URIBanner       varchar(50),
     fechaCreacion   date         not null,
     bits            number(20)   not null,
-    nivel           number(1)    not null check(nivel in (1,2,3)),
-    medioPagoPred   number(10)  references MedioDePago
+    nivel           number(1)    not null check(nivel in (1,2,3))
 );
 
 CREATE OR REPLACE PROCEDURE CHECK_AGE (fecha IN DATE) AS
@@ -107,6 +109,54 @@ VALUES ('prueba6', 'El prueba 6', 'notapassword', 'nada muy interesante', '10-JA
 INSERT INTO USUARIO (NOMBREPRIVADO, NOMBREPUBLICO, CONTRASEÑA, BIOGRAFIA, FECHANACIMIENTO, NUMTELEFONO, URIFOTO, URIBANNER, FECHACREACION, BITS, NIVEL) 
 VALUES ('prueba6', 'El prueba 6', 'notapassword', 'nada muy interesante', '10-JAN-10', 1234, 'asd', 'asd', CURRENT_DATE, 0, 1);
 
+CREATE TABLE Fotos(
+	nombreUsuario varchar(50) references Usuario,
+	name varchar(50) not null,
+	foto blob, --seria una RNE a nivel aplicacion
+	PRIMARY KEY(nombreUsuario, name)
+);
+
+CREATE OR REPLACE PROCEDURE CHECK_EXTENSION (fotoname IN VARCHAR) AS
+	IS_VALID BOOLEAN;
+BEGIN
+	IF (fotoname Like '%.jpeg' OR fotoname Like '%.png') OR fotoname Like '%.gif' THEN
+		IS_VALID := TRUE;
+	ELSE
+		IS_VALID := FALSE;
+	END IF;
+
+	IF NOT IS_VALID THEN
+		RAISE_APPLICATION_ERROR(-20008, 'La imagen provista no esta en uno de los formatos aceptados');
+	END IF;
+END;
+--Trigger para validar nombre termina con alguna de las extensiones
+--Probar trigger y validar pruebas
+
+CREATE OR REPLACE TRIGGER VALIDATE_IMAGE BEFORE INSERT OR UPDATE ON Fotos
+FOR EACH ROW
+BEGIN
+	CHECK_EXTENSION(:NEW.name);
+END;
+
+INSERT INTO FOTOS (nombreUsuario, name) VALUES ('prueba1','perfil.jpeg');
+INSERT INTO FOTOS (nombreUsuario, name) VALUES ('prueba1','banner.png');
+INSERT INTO FOTOS (nombreUsuario, name) VALUES ('prueba2','algo.gif');
+INSERT INTO FOTOS (nombreUsuario, name) VALUES ('prueba3','otracosa.gif');
+INSERT INTO FOTOS (nombreUsuario, name) VALUES ('prueba4','banner.jpeg');
+COMMIT;
+INSERT INTO FOTOS (nombreUsuario, name) VALUES ('prueba4','banner.jpg');
+
+CREATE TABLE Compra(
+	id NUMBER GENERATED AS IDENTITY,
+	nombreComprador varchar(50) not null references Usuario,
+	medioDePago number not null references MedioDePago,
+	cantidad number(10) not null check(cantidad in (300,5000,25000)),
+	PRIMARY KEY(id)
+)
+
+--Trigger validar medio de pago habilitado
+--Trigger aumentar cantidad de bits de usuario
+
 CREATE TABLE Donaciones(
 	nombreDonador varChar(50) NOT null references Usuario,
 	nombreDonado varChar(50) NOT null references Usuario,
@@ -114,6 +164,8 @@ CREATE TABLE Donaciones(
 	monto	      number(20)  NOT null,
 	primary key(nombreDonador, nombreDonado, fechaDonacion)
 );
+
+--Trigger aumentar cantidad de bits de usuario
 
 CREATE OR REPLACE PROCEDURE CHECK_POSITIVE_AMOUNT(monto IN NUMBER) AS
 BEGIN
@@ -163,6 +215,7 @@ CREATE TABLE Suscripcion(
 	nombreSuscripto varchar(50) NOT null references usuario,
 	fechaSuscripcion date 	     NOT null,
 	fechaRenovacion  date 	     NOT null,
+	pais varchar(50) not null,
 	medioPago	 number NOT null references MedioDePago,
 	primary key(nombreSuscriptor, nombreSuscripto)
 );
