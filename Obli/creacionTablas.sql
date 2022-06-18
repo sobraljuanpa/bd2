@@ -1,8 +1,8 @@
 DROP TABLE Compra;
 DROP TABLE Suscripcion;
 DROP TABLE Donaciones;
-DROP TABLE Logro;
 DROP TABLE UsuarioLogro;
+DROP TABLE Logro;
 DROP TABLE Fotos;
 DROP TABLE MedioDePago;
 DROP TABLE Usuario;
