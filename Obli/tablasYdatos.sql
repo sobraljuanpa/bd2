@@ -66,8 +66,6 @@ CREATE TABLE Usuario(
     fechaNacimiento date         not null,
     numTelefono     number(20),
     email           varchar(50),
-    URIFoto         varchar(50),
-    URIBanner       varchar(50),
     fechaCreacion   date         not null,
     bits            number(20)   not null,
     nivel           number(1)    not null check(nivel in (1,2,3))
