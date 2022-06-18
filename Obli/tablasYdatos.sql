@@ -12,7 +12,7 @@ CREATE TABLE MedioDePago(
 	nombreUsuario varchar(50) not null references Usuario,
 	numero 		number(10),
 	correo 		varchar(50),
-	habilitado 	char(1) NOT null, -- Y O N
+	habilitado 	char(1) NOT null check(habilitado in ('Y','N')), -- Y O N LIMITAR VALORES CON UN ENUM
     PRIMARY KEY(id)
 );
 
@@ -150,10 +150,26 @@ CREATE TABLE Compra(
 	medioDePago number not null references MedioDePago,
 	cantidad number(10) not null check(cantidad in (300,5000,25000)),
 	PRIMARY KEY(id)
-)
+);
 
---Trigger validar medio de pago habilitado
---Trigger aumentar cantidad de bits de usuario
+CREATE OR REPLACE PROCEDURE AUMENTAR_CANTIDAD_BITS(nombre IN VARCHAR, cantidad IN NUMBER) AS
+	CANTIDAD_PREVIA NUMBER;
+BEGIN
+	SELECT bits INTO CANTIDAD_PREVIA FROM Usuario WHERE nombrePrivado = nombre;
+	UPDATE Usuario SET bits = (CANTIDAD_PREVIA + cantidad) WHERE nombrePrivado = nombre;
+END;
+
+CREATE OR REPLACE TRIGGER VALIDAR_COMPRA_BITS BEFORE INSERT OR UPDATE ON COMPRA
+FOR EACH ROW
+BEGIN
+	CHECK_PAYMENTMETHOD_ENABLED(:NEW.medioDePago);
+	AUMENTAR_CANTIDAD_BITS(:NEW.nombreComprador, :NEW.cantidad);
+END;
+
+INSERT INTO COMPRA (nombreComprador, medioDePago, cantidad) VALUES ('prueba1', 1, 5000);
+INSERT INTO COMPRA (nombreComprador, medioDePago, cantidad) VALUES ('prueba2', 2, 300);
+SELECT * FROM COMPRA;
+COMMIT;
 
 CREATE TABLE Donaciones(
 	nombreDonador varChar(50) NOT null references Usuario,
@@ -163,7 +179,12 @@ CREATE TABLE Donaciones(
 	primary key(nombreDonador, nombreDonado, fechaDonacion)
 );
 
---Trigger aumentar cantidad de bits de usuario
+CREATE OR REPLACE PROCEDURE REDUCIR_CANTIDAD_BITS(nombre IN VARCHAR, cantidad IN NUMBER) AS
+	CANTIDAD_PREVIA NUMBER;
+BEGIN
+	SELECT bits INTO CANTIDAD_PREVIA FROM Usuario WHERE nombrePrivado = nombre;
+	UPDATE Usuario SET bits = (CANTIDAD_PREVIA - cantidad) WHERE nombrePrivado = nombre;
+END;
 
 CREATE OR REPLACE PROCEDURE CHECK_POSITIVE_AMOUNT(monto IN NUMBER) AS
 BEGIN
@@ -188,6 +209,8 @@ FOR EACH ROW
 BEGIN
 	CHECK_POSITIVE_AMOUNT(:NEW.monto);
 	CHECK_AMOUNT_AVAILABLE(:NEW.monto, :NEW.nombreDonador);
+	AUMENTAR_CANTIDAD_BITS(:NEW.nombreDonado, :NEW.monto);
+	REDUCIR_CANTIDAD_BITS(:NEW.nombreDonador, :NEW.monto);
 END;
 
 INSERT INTO DONACIONES (NOMBREDONADOR, NOMBREDONADO, FECHADONACION, MONTO) 
