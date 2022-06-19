@@ -29,3 +29,28 @@ REQ_1(nombre, fechaInicio, fechaFin, nombreRet, donTotal, bitsTotal);
     DBMS_OUTPUT.PUT_LINE('Usuario '|| nombreRet||' recibió '|| donTotal||' donaciones generando'||bitsTotal||'bits');
 end;
 ```
+### Requerimiento 2
+```SQL
+CREATE OR REPLACE PROCEDURE REQ_2(x in NUMBER) AS
+BEGIN 
+	FOR ROW IN (	SELECT u.nombrePrivado, count(u.nombrePrivado) as nrosubscriptores
+			From Usuario u JOIN Suscripcion s on s.nombreSuscripto = u.nombrePrivado
+			WHERE CURRENT_DATE BETWEEN s.fechaSuscripcion AND s.fechaRenovacion
+			Group by (u.nombreprivado)
+			Order by (nrosubscriptores) DESC
+			fetch first x ROWS ONLY)
+	LOOP
+	    DBMS_OUTPUT.PUT_LINE('Usuario '|| row.nombrePrivado||' tiene un total de '|| row.nrosubscriptores||' subscriptores');
+	END LOOP;
+END;
+```
+Para probar el requerimiento dejamos un ejemplo a continuación.
+
+```
+set SERVEROUT on;
+declare
+    x number:=2;
+begin
+REQ_2(x);
+end;
+```
