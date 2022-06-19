@@ -29,6 +29,8 @@ REQ_1(nombre, fechaInicio, fechaFin, nombreRet, donTotal, bitsTotal);
     DBMS_OUTPUT.PUT_LINE('Usuario '|| nombreRet||' recibió '|| donTotal||' donaciones generando'||bitsTotal||'bits');
 end;
 ```
+
+
 ### Requerimiento 2
 ```SQL
 CREATE OR REPLACE PROCEDURE REQ_2(x in NUMBER) AS
@@ -54,3 +56,25 @@ begin
 REQ_2(x);
 end;
 ```
+### Requerimiento 3
+
+```
+CREATE OR REPLACE PROCEDURE REQ_3 AS
+CURSOR CUR_SUBS
+IS
+	SELECT u.nombrePrivado, s.fechaRenovacion, s.fechasuscripcion
+	FROM Usuario u 
+    	JOIN Suscripcion s ON s.nombreSuscriptor = u.nombreprivado
+    	JOIN Mediodepago m ON m.id = s.mediopago  
+	WHERE CURRENT_DATE = s.fechaRenovacion AND m.habilitado = 'Y';
+BEGIN
+	FOR ROW IN CUR_SUBS
+	LOOP
+		update SUSCRIPCION  SET fechaRenovacion=ADD_MONTHS(ROW.fechaRenovacion, MONTHS_BETWEEN(ROW.fechaSuscripcion, ROW.fechaRenovacion));
+        commit;
+	END LOOP;
+END;
+```
+Utilizamos un cursor para almacenar la tabla resultante de la consulta. Por otro lado en cada iteracion materializamos cada subscripcion para que no haya perdida de datos.
+En caso de una interrupción del proceso. Los datos ya actualizados permaneceran actualizados. Al correr nuevamente éste procedimiento, obtendremos en la consulta sólo aquellas subscripciones que no se hayan renovado.
+
